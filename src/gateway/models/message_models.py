@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 from pydantic import BaseModel
-
+from src.api.api import interface, API
 
 class Author(BaseModel):
     username: str
@@ -27,26 +27,27 @@ class Member(BaseModel):
 
 
 class MessageEvent(BaseModel):
-    type: int
-    tts: bool
-    timestamp: datetime
+    type: int|None
+    tts: bool|None
+    timestamp: datetime|None
     referenced_message: Any|None
-    pinned: bool
-    nonce: int
-    mentions: list[Any]
-    mention_roles: list[Any]
-    mention_everyone: bool
-    member: Member
+    pinned: bool|None
+    nonce: int|None
+    mentions: list[Any]|None
+    mention_roles: list[Any]|None
+    mention_everyone: bool|None
+    member: Member|None
     id: int
-    flags: int
-    embeds: list[Any]
+    flags: int|None
+    embeds: list[Any]|None
     edited_timestamp: Any|None
-    content: str
-    components: list[Any]
+    content: str|None
+    components: list[Any]|None
     channel_id: int
-    author: Author
-    attachments: list[Any]
+    author: Author|None
+    attachments: list[Any]|None
     guild_id: int
 
-    async def reply(self, content: str) -> None:
-        print(content)
+    async def reply(self, content: str, embeds = []) -> None:
+        api: API = interface['api']
+        api.create_ref_message(self.channel_id, self.id, self.guild_id, content, embeds)

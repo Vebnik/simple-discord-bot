@@ -4,6 +4,8 @@ import logging
 from src.gateway.gateway import Gateway
 from src.gateway.models.models import Config, IdentifyData, IdentifyDataToken
 
+from src.api.api import initApi
+from src.api.models.models import ApiConfig
 
 class App:
 
@@ -24,10 +26,18 @@ class App:
                 bot_token=token,
                 identify_data=self.identity_data
             )
+
+            self.api_config = ApiConfig(
+                api_version='v10',
+                base_url='https://discord.com/api',
+                token=token
+            )
+
         except Exception as ex:
             print(ex)
 
     async def run(self) -> None:
+        self.api = initApi(self.api_config)
         self.gateway = Gateway(self.config, logging.INFO, self.handlers_pool)
         await self.gateway.run()
     
