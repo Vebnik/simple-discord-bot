@@ -1,5 +1,4 @@
 from pydantic import BaseModel, validator
-from src.api.api import interface, API
 
 
 class ApiConfig(BaseModel):
@@ -40,5 +39,7 @@ class Channel(BaseModel):
     nsfw: bool
 
     async def send_message(self, content: str, embeds = []) -> None:
+        from src.api.api import interface, API
+        
         api: API = interface['api']
         api.create_message(self.id, content, embeds)

@@ -9,7 +9,6 @@ from src.gateway.config import Intents, Event
 from src.discord.app import App
 
 
-
 async def main() -> None:
     logging.basicConfig(level=logging.INFO)
 
@@ -32,3 +31,6 @@ async def main() -> None:
 if __name__ == '__main__':
     asyncio.run(main())
 
+  
+
+  
