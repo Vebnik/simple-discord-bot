@@ -14,9 +14,10 @@ class Gateway:
     identify_data: IdentifyMessage
     handlers_pool: dict[str, Any]
 
-    def __init__(self, config: Config, logging_level: int, handlers_pool: dict[str, Any]) -> None:
+    def __init__(self, config: Config, logging_level: int, handlers_pool: dict[str, Any], app) -> None:
         self.config = config
         self.handlers_pool = handlers_pool
+        self.app = app
         logging.basicConfig(level=logging_level)
 
     async def run(self):
@@ -47,8 +48,10 @@ class Gateway:
         while True:
             try:
                 msg: dict = json.loads(await self.connection.recv())
+
                 if msg.get('t'):
-                    asyncio.ensure_future(EventHandler.switcher(self.handlers_pool, msg))
+                    asyncio.ensure_future(EventHandler.switcher(self.handlers_pool, msg, self.app)) # app instance App
+
                 logging.info('_event')
             except Exception as ex:
                 logging.critical(ex)
@@ -56,3 +59,18 @@ class Gateway:
 
     async def _resume(self) -> None:
         logging.info('_resume')
+
+    async def voice_state_update(self, config) -> None:
+        logging.info('_voice_state_update')
+        
+        voice_payload = {
+            "op": 4,
+            "d": {
+                "guild_id": config.get('guild_id'),
+                "channel_id": "993069983481475133",
+                "self_mute": False,
+                "self_deaf": True
+            }
+        }
+
+        await self.connection.send(json.dumps(voice_payload))

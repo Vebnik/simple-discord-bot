@@ -1,6 +1,9 @@
 from typing import Any
 import logging
 
+from src.voice_gateway.gateway import VoiceGateway
+from src.voice_gateway.models import VoiceUpdateEvent
+
 from src.gateway.gateway import Gateway
 from src.gateway.models.models import Config, IdentifyData, IdentifyDataToken
 
@@ -10,7 +13,9 @@ from src.api.models.models import ApiConfig
 class App:
 
     gateway: Gateway
+    voice_gateway: VoiceGateway
     handlers_pool: dict[str, Any] = {}
+    session_id: str
 
     def __init__(self, token: str, intents: list[int]) -> None:
         try:
@@ -38,7 +43,7 @@ class App:
 
     async def run(self) -> None:
         self.api = initApi(self.api_config)
-        self.gateway = Gateway(self.config, logging.INFO, self.handlers_pool)
+        self.gateway = Gateway(self.config, logging.INFO, self.handlers_pool, self)
         await self.gateway.run()
     
     def event(self, event: str) -> Any:
@@ -50,4 +55,9 @@ class App:
     def get_handlers_pool(self) -> dict:
         return self.handlers_pool
     
-        
+    async def init_voice(self, url, config: dict) -> None:
+        await self.gateway.voice_state_update(config)
+
+    async def init_voice_gateway(self, config: VoiceUpdateEvent) -> None:
+        self.voice_gateway = VoiceGateway(config, self)
+        await self.voice_gateway.run()

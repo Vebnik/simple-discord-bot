@@ -10,7 +10,7 @@ class Request:
             }
 
     def post(self, url: str, body):
-        logging.info(url)
+        # logging.info(url)
 
         try:
             response = requests.post(url=url, json=body, headers=self.headers)
@@ -21,7 +21,7 @@ class Request:
             return {'ok': False, 'status': response.status_code, 'message': ex}
 
     def get(self, url: str):
-        logging.info(url)
+        # logging.info(url)
 
         try:
             response = requests.get(url=url, headers=self.headers)

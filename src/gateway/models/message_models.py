@@ -1,7 +1,10 @@
 from datetime import datetime
 from typing import Any
 from pydantic import BaseModel
+
 from src.api.api import interface, API
+# from src.discord.app import App
+
 
 class Author(BaseModel):
     username: str
@@ -47,7 +50,8 @@ class MessageEvent(BaseModel):
     author: Author|None
     attachments: list[Any]|None
     guild_id: int
+    app: Any|None
 
-    async def reply(self, content: str, embeds = []) -> None:
+    def reply(self, content: str, embeds = []) -> None:
         api: API = interface['api']
         api.create_ref_message(self.channel_id, self.id, self.guild_id, content, embeds)
