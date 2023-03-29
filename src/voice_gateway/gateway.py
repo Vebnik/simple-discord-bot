@@ -1,6 +1,5 @@
 from websockets.legacy import client
-import asyncio, json, logging
-from typing import Any
+import asyncio, json, logging, struct, libnacl
 
 from src.voice_gateway.models import VoiceUpdateEvent, InitMessage, VoiceIndentifyMessage, SelectProtocolMessage
 
@@ -13,6 +12,7 @@ class VoiceGateway:
     select_protocol: SelectProtocolMessage
     heartbeat_interval: int
     identify_data: dict
+    current_packet_num_audio: int = 0
 
     def __init__(self, config: VoiceUpdateEvent, app) -> None:
         self.config = config
@@ -30,6 +30,7 @@ class VoiceGateway:
         await self._gateway_connect()
         await self._identify()
         await self._select_protocol()
+        await self._speaking()
         await asyncio.gather(*[self._event(), self._heartbeat()])
 
     async def _gateway_connect(self) -> None:
@@ -42,7 +43,7 @@ class VoiceGateway:
 
             print(msg)
         except Exception as ex:
-             logging.critical(ex); exit()
+            logging.critical(ex); exit()
 
     async def _heartbeat(self) -> None:
         while True:
@@ -86,5 +87,40 @@ class VoiceGateway:
         self.select_protocol = SelectProtocolMessage.parse_raw(await self.connection.recv())
         print(self.select_protocol)
 
+    async def _speaking(self) -> None:
+        config = {
+            "op": 5,
+            "d": {
+                "speaking": 5,
+                "delay": 0,
+                "ssrc": 1
+            }
+        }
+
+        await self.connection.send(json.dumps(config))
+        msg = await self.connection.recv()
+
+        print(msg)
+
     async def _resume(self) -> None:
         logging.info('_resume')
+
+    async def _send_audio(self, msg) -> None:
+        cipher_text = f"\x90\x78{struct.pack('>h', self.current_packet_num_audio)}\x2f\xa5\x6c\xab\x00\x00\x00\x01"
+        cipher_text = f'{cipher_text}{self._encrypt(msg)}'
+        cipher_text = f"{cipher_text}{struct.pack('<I', self.current_packet_num_audio)}"
+
+        await self.connection.send(cipher_text)
+        self.current_packet_num_audio += 1
+
+    def _encrypt(self, plain_text) -> str:
+        cipher_text = libnacl.crypto_secretbox(
+            plain_text, 
+            struct.pack('<I', self.current_packet_num_audio) + "\x00" * 20, 
+            ''.join([chr(char) for char in self.select_protocol.d.secret_key])
+        )
+
+        if(self.current_packet_num_audio > 32766):
+            self.current_packet_num_audio = 0
+
+        return cipher_text

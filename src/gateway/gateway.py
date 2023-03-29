@@ -32,7 +32,7 @@ class Gateway:
             msg = InitMessage.parse_raw(await self.connection.recv())
             self.heartbeat_interval = msg.d.heartbeat_interval
         except Exception as ex:
-             logging.critical(ex); exit()
+            logging.critical(ex); exit()
 
     async def _heartbeat(self) -> None:
         while True:

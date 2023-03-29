@@ -2,12 +2,9 @@ from dotenv import load_dotenv; load_dotenv()
 from os import getenv
 import asyncio, logging, datetime as dt
 
-# from src.gateway.models.message_models import MessageEvent
 from src.gateway.models.service_models import ReadyEvent
-
 from src.gateway.config import Intents, Event
 from src.discord.app import App
-
 from src.command.command_switcher import Switcher
 
 
